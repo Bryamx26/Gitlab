@@ -1,16 +1,33 @@
-
 services:
   gitlab:
-    image: yrzr/gitlab-ce-arm64v8:latest
+    image: gitlab/gitlab-ce:latest  # Toujours l'image officielle
     container_name: gitlab
     restart: always
     hostname: gitlab.bryamsilva.online
     ports:
-      - "8888:80"
-      - "8443:443"
-      - "2222:22"
+      - "8888:80"    # Le port HTTP local (que Cloudflare Tunnel va viser)
+      - "2222:22"    # Le port SSH (utile si tu veux cloner en SSH en réseau local)
+      # On retire le 8443 car Cloudflare gère le SSL
     volumes:
       - ./config:/etc/gitlab
       - ./logs:/var/log/gitlab
       - ./data:/var/opt/gitlab
     shm_size: '256m'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        # 1. L'URL publique est en HTTPS
+        external_url 'https://gitlab.bryamsilva.online'
+
+        # 2. Mais on désactive le SSL interne (Cloudflare s'en occupe)
+        nginx['listen_https'] = false
+        nginx['listen_port'] = 80
+
+        # 3. Configuration pour que GitLab sache qu'il est derrière un proxy
+        # Cela évite les erreurs de redirection infinie
+        nginx['proxy_set_headers'] = {
+          "X-Forwarded-Proto" => "https",
+          "X-Forwarded-Ssl" => "on"
+        }
+
+        # 4. Port SSH affiché dans l'interface (Clone URL)
+        gitlab_rails['gitlab_shell_ssh_port'] = 2222
