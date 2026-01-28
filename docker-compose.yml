@@ -1,0 +1,16 @@
+
+services:
+  gitlab:
+    image: yrzr/gitlab-ce-arm64v8:latest
+    container_name: gitlab
+    restart: always
+    hostname: gitlab.bryamsilva.online
+    ports:
+      - "8888:80"
+      - "8443:443"
+      - "2222:22"
+    volumes:
+      - ./config:/etc/gitlab
+      - ./logs:/var/log/gitlab
+      - ./data:/var/opt/gitlab
+    shm_size: '256m'
