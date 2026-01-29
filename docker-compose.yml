@@ -1,3 +1,6 @@
+networks:
+  gitlab-network:
+    
 services:
   gitlab:
     image: gitlab/gitlab-ce:latest  # Toujours l'image officielle
@@ -13,6 +16,8 @@ services:
       - ./logs:/var/log/gitlab
       - ./data:/var/opt/gitlab
     shm_size: '256m'
+    networks:
+      - gitlab-network
     environment:
       GITLAB_OMNIBUS_CONFIG: |
         # 1. L'URL publique est en HTTPS
@@ -31,3 +36,12 @@ services:
 
         # 4. Port SSH affiché dans l'interface (Clone URL)
         gitlab_rails['gitlab_shell_ssh_port'] = 2222
+  gitlab-runner:
+    image: gitlab/gitlab-runner:latest
+    container_name: gitlab-runner
+    restart: always
+    volumes:
+      - ./gitlab-runner/config:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - gitlab-network
